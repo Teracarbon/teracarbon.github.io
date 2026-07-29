@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teracarbon Energy</title>
+<style>
+    :root {
+        --paper:   #e8e3d7;
+        --panel:   #e2e8f0;
+        --ink:     #18222e;
+        --muted:   #5b6b7e;
+        --line:    #c3ccd8;
+        --accent:  #1f5f9e;
+        --accent2: #4a93cf;
+        --sans:    "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --mono:    "Courier New ", Courier, monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+
+    #molfield {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    body {
+        position: relative;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 0.98rem;
+        line-height: 1.65;
+        letter-spacing: 0.005em;
+    }
+    .topbar, .tabs, .wrap, footer { position: relative; z-index: 1; }
+
+    .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 40px;
+    }
+
+    h1, h2, h3, .mark { font-family: var(--sans); }
+
+    /* Inline brand lockup */
+    .brand--inline {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.4em;
+    }
+    .brand--inline .brand-name { text-transform: none; }
+    .brand--inline .brand-sub {
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* ── Top bar ───────────────────────────── */
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 28px 40px;
+        border-bottom: 1px solid var(--ink);
+    }
+    .mark {
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+    }
+    .mark b { color: var(--accent); }
+    .index {
+        font-size: 0.76rem;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+    }
+
+    /* ── Tabs / nav ────────────────────────── */
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--ink);
+        flex-wrap: wrap;
+    }
+    .tab {
+        appearance: none;
+        background: transparent;
+        border: 0;
+        border-right: 1px solid var(--line);
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        padding: 16px 28px;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+    }
+    .tab:hover { color: var(--ink); background: var(--panel); }
+    .tab.active {
+        color: #fff;
+        background: var(--accent);
+        border-right-color: var(--accent);
+    }
+
+    /* ── Panels ────────────────────────────── */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fade 0.25s ease; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+    .colhead {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        padding-top: 6px;
+    }
+
+    /* ── Masthead ──────────────────────────── */
+    .masthead {
+        padding: 96px 0 72px;
+        display: grid;
+        grid-template-columns: 1fr 3fr;
+        align-items: start;
+        border-bottom: 1px solid var(--line);
+    }
+    .masthead .tag {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--accent);
+        padding-top: 10px;
+    }
+    .masthead h1 {
+        font-size: clamp(2.1rem, 5vw, 3.5rem);
+        line-height: 1.08;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        max-width: 15ch;
+    }
+    .masthead h1 em { font-style: normal; color: var(--accent); }
+    .masthead .intro {
+        grid-column: 2;
+        margin-top: 24px;
+        max-width: 70ch;
+    }
+
+    .twocol {
+        display: grid;
+        grid-template-columns: 1fr 3fr;
+        padding: 70px 0;
+        border-bottom: 1px solid var(--line);
+    }
+    .twocol .body { max-width: 60ch; }
+    .twocol .body p.large {
+        font-family: var(--sans);
+        font-size: 1.4rem;
+        line-height: 1.45;
+    }
+    .twocol .body p + p { margin-top: 1.3em; }
+    .twocol .body p { color: var(--ink); }
+    .twocol .body p.dim { color: var(--muted); }
+
+    .numbers li { margin-bottom: 8px; }
+    .numbers .result { color: var(--ink); margin-top: 12px; }
+    .numbers .highlight { color: #ff0000; font-weight: 700; }
+    .numbers .punch {
+        text-align: center;
+        margin-top: 24px;
+        color: var(--ink);
+    }
+
+    /* ── Grids of statements / steps ───────── */
+    .grid3, .grid4 {
+        display: grid;
+        gap: 40px;
+    }
+    .grid3 { grid-template-columns: repeat(3, 1fr); }
+    .grid4 { grid-template-columns: repeat(2, 1fr); }
+    .cell { border-top: 2px solid var(--accent); padding-top: 18px; }
+    .cell .no { font-size: 0.8rem; color: var(--accent2); margin-bottom: 14px; }
+    .cell h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.01em; }
+    .cell p { font-size: 0.92rem; color: var(--muted); }
+
+    /* ── Contact ───────────────────────────── */
+    .contact-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 48px; }
+    .contact-block h3 { font-size: 1.05rem; margin-bottom: 10px; }
+    .contact-block a { color: var(--accent); text-decoration: none; }
+    .contact-block a:hover { color: var(--accent2); }
+    .contact-block p { color: var(--muted); margin-bottom: 6px; }
+
+    form { display: flex; flex-direction: column; gap: 14px; max-width: 460px; }
+    label {
+        font-size: 0.74rem; text-transform: uppercase;
+        letter-spacing: 0.1em; color: var(--muted); margin-bottom: -8px;
+    }
+    input, textarea {
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 11px 12px;
+        color: var(--ink);
+    }
+    input:focus, textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 110px; }
+    .submit {
+        align-self: flex-start;
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        font-family: var(--mono);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.78rem;
+        padding: 12px 24px;
+        cursor: pointer;
+    }
+    .submit:hover { background: var(--accent2); }
+
+    /* ── Timeline (scoped) ─────────────────── */
+.timeline {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 100%;
+    padding: 100px 0;
+}
+.timeline::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 3px;
+    background: #000;
+    transform: translateY(-50%);
+    z-index: 0;
+}
+.timeline .event {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+.timeline .dot {
+    width: 16px;
+    height: 16px;
+    background: #000;
+    border: 3px solid var(--paper);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #000;
+}
+.timeline .label {
+    position: absolute;
+    width: 140px;
+    text-align: center;
+}
+.timeline .label .date {
+    display: block;
+    font-weight: 700;
+    color: #000000;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    font-family: var(--sans);
+}
+.timeline .label .text {
+    font-size: 0.8rem;
+    color: #585959;
+    line-height: 1.3;
+}
+.timeline .label::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 2px;
+    height: 30px;
+    background: #000;
+    transform: translateX(-50%);
+}
+.timeline .event.up .label { bottom: calc(50% + 38px); }
+.timeline .event.up .label::after { top: 100%; }
+.timeline .event.down .label { top: calc(50% + 38px); }
+.timeline .event.down .label::after { bottom: 100%; }
+
+    /* ── Footer ────────────────────────────── */
+    footer {
+        border-top: 1px solid var(--ink);
+        padding: 26px 40px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    /* ── Responsive ────────────────────────── */
+    @media (max-width: 760px) {
+        .wrap { padding: 0 24px; }
+        .topbar, footer { padding-left: 24px; padding-right: 24px; }
+        .masthead, .twocol { grid-template-columns: 1fr; gap: 28px; }
+        .masthead .intro { grid-column: 1; }
+        .grid3, .grid4, .contact-grid { grid-template-columns: 1fr; gap: 28px; }
+        .masthead { padding: 52px 0 44px; }
+        .tab { padding: 13px 18px; flex: 1 1 auto; text-align: center; }
+        .timeline { flex-direction: column; gap: 70px; padding: 20px 0; }
+        .timeline::before { display: none; }
+        .timeline .label { position: static; width: 100%; }
+        .timeline .label::after { display: none; }
+    }
+    
+	    .planlist {
+	    display: flex;
+	    flex-direction: column;
+	    gap: 28px;
+	}
+	.plan-item h3 {
+	    font-size: 1.05rem;
+	    font-weight: 700;
+	    margin-bottom: 10px;
+	    letter-spacing: -0.01em;
+	}
+	.plan-item p {
+	    font-size: 0.92rem;
+	    color: var(--muted);
+	    max-width: 70ch;
+	}
+	
+	.side-img {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 50vh;          /* full height of the viewport */
+    width: 33vw;            /* about one-third of the page width each */
+    object-fit: cover;      /* fills the area, cropping as needed */
+    z-index: -2;             /* behind .wrap (which is z-index: 1) */
+    opacity: 0.1;          /* optional — soften them under the content */
+    pointer-events: none;   /* clicks pass through to the page */
+}
+.side-img.left  { left: 0; }
+.side-img.right { right: 0; }
+</style>
+</head>
+<img src="left-image.png"  class="side-img left"  alt="">
+<img src="right-image.png" class="side-img right" alt="">
+<body>
+    <!-- Electron-density molecule field -->
+    <canvas id="molfield" aria-hidden="true"></canvas>
+
+    <!-- Top bar -->
+    <div class="topbar">
+        <div class="mark">Teracarbon <b>Energy</b></div>
+        <div class="index">DIRECT AIR CAPTURE / EST. 2025</div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+        <button class="tab active" data-target="mission">Mission</button>
+        <button class="tab" data-target="technology">Technology</button>
+        <!--
+        <button class="tab" data-target="news">News</button>
+        <button class="tab" data-target="team">Team</button>
+        -->
+        <button class="tab" data-target="contact">Contact</button>
+    </nav>
+
+    <div class="wrap">
+
+        <!-- ───────── MISSION ───────── -->
+        <div class="panel active" id="mission">
+            <section class="masthead">
+                <div class="tag"><b><h3>Company Mission</h3></b></div>
+                <h1>A ground-up redesign of <em>DAC</em>.</h1>
+                <p class="intro" style="text-align: justify;">We seek a practical route towards remediating <i>tera</i>tons of Terran atmospheric carbon that will require <i>tera</i>watts of clean power. Achieving this at target costs of $100 USD ton<sup>-1</sup> CO<sub>2</sub>, would facilitate access to a global market for direct air CO<sub>2</sub> capture (DAC) valued in <i>tera</i>dollars. However, tera-scale deployment of existing DAC technologies would consume a significant fraction of current and projected clean energy capacity on Earth. This reduces the entire space of possible DAC solutions to two sets: (1) technologies that increase the supply and drive down the cost of energy needed to for run exisiting, power-intensive capture applications or (2) novel technologies that capture atmospheric CO<sub>2</sub> with minimal energy demand. We embody the latter approach, pursuing a demand-side technology that actually stores energy concurrently with CO<sub>2</sub> removal.</p>
+            </section>
+
+            <section class="twocol">
+                <div class="colhead"><b><h3>Some O==C==O Numbers:</h3></b></div>
+                <div class="body">
+                    <ul class="numbers">
+                        <li>Incumbent DAC: 2,000–3,000 kW·hr ton<sup>-1</sup> CO<sub>2</sub>.</li>
+                        <li>IPCC removal target: 10 billion tons CO<sub>2</sub> yr<sup>-1</sup>.</li>
+                        <li class="result">⇒ <b>20,000–30,000 TW·hr yr<sup>-1</sup></b> energy required.</li>
+                        <li>Global, carbon-free energy generation, 2024: <span class="highlight">32,000 TW·hr yr<sup>-1</sup></span></li>
+                    </ul>
+                    <br></br>
+                    <h2 class="punch">You see the problem here.</h2>
+                </div>
+            </section>
+
+		<section class="twocol">
+		    <div class="colhead"><b><h3>Our Plan Involves:</h3></b></div>
+		    <div class="planlist">
+			<div class="plan-item">
+			    <h3>Mitigating energetic losses via recovery</h3>
+			    <p>Swing-cycle capture methods theoretically allow for energy recovery. We achieve this using room-temperature electrochemistry rather than inefficient heat cycles.</p>
+			</div>
+			<div class="plan-item">
+			    <h3>Improving process kinetics</h3>
+			    <p>Biochemical catalysis is used to remove a key bottleneck in CO<sub>2</sub> removals, speeding up capture.</p>
+			</div>
+			<div class="plan-item">
+			    <h3>Resolving MRV issues through triply-redundant quantification</h3>
+			    <p>By virtue of the system design, we can measure captured CO<sub>2</sub> quantitatively by at least three distinct chemical methods. This resolves the measurement, reporting and verification (MRV) issues of many carbon removal methods.</p>
+			</div>
+			<div class="plan-item">
+			    <h3>Reallocating electricity, CO<sub>2</sub> storage/resale &amp; quantitative CO<sub>2</sub> credits</h3>
+			    <p>Our process design opens up multiple business models, easing the path towards system scalability and financial sustainability.</p>
+			</div>
+		    </div>
+		</section>
+        </div>
+
+        <!-- ───────── TECHNOLOGY ───────── -->
+        <div class="panel" id="technology">
+            <section class="masthead">
+                <div class="tag"><b><h3>Technology</h3></b></div>
+                <h1>A <em>hy</em>brid process for low-temperature regeneration and <em>energy recovery</em>.</h1>
+            </section>
+
+            <section class="twocol">
+                <div class="colhead"><b><h3>Overview</h3></b></div>
+                <div class="body">
+                    <p>Our flagship technology is CyCAM, a cyanobacterial mutant strain whose genome has been modified with a gene for recombinant expression of carbonic anhydrase (CA). Expression of this enzyme in CO<sub>2</sub>-rich media drives the fast addition of water to CO<sub>2</sub> at alkaline pH. When incorporated into a supercapacitor, these constructs enable faster rates of CO<sub>2</sub> uptake. Early implementations of our system will focus on integrating isolated CA with our supercapacitor.</p>
+                </div>
+            </section>
+
+<section class="twocol">
+    <div class="colhead"><h3>Progress</h3></div>
+    <div class="body">
+        <div class="timeline">
+            <div class="event up">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">Oct. 2021</span>
+                    <span class="text">Start of CyCAM Development</span>
+                </div>
+            </div>
+            <div class="event down">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">Mar. 2022</span>
+                    <span class="text">Gen 1 CyCAMs constructed</span>
+                </div>
+            </div>
+            <div class="event up">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">Sept. 2024</span>
+                    <span class="text">Start of supercapacitor development</span>
+                </div>
+            </div>
+            <div class="event down">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">Oct. 2024</span>
+                    <span class="text">Completion of CyCAM characterizations</span>
+                </div>
+            </div>
+            <div class="event up">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">Dec. 2024</span>
+                    <span class="text">Supercapacitor simulations</span>
+                </div>
+            </div>
+            <div class="event down">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">Apr. 2025</span>
+                    <span class="text">Teracarbon Founded</span>
+                </div>
+            </div>
+            <div class="event up">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">Mar. 2026</span>
+                    <span class="text"> First CA-integrated supercap prototype (5 cm<sup>2</sup>)</span>
+                </div>
+            </div>
+            <div class="event down">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">---</span>
+                    <span class="text">100 cm<sup>2</sup> prototype</span>
+                </div>
+            </div>
+            <!--
+            <div class="event up">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">---</span>
+                    <span class="text">1000 cm<sup>2</sup> unit cell</span>
+                </div>
+            </div>
+            <div class="event down">
+                <div class="dot"></div>
+                <div class="label">
+                    <span class="date">---</span>
+                    <span class="text">First 1000 cm<sup>2</sup> stack assembly</span>
+                </div>
+            </div>
+            -->
+        </div>
+    </div>
+</section>
+
+            	<section class="twocol">
+             <div class="colhead"><b><h3>Company IP</h3></b></div>
+                <div> <!-- class="body"> -->
+                    <p><b>Licensed from Lawrence Berkeley National Laboratory:</b></p>
+		    <p> Agbo, P. Carbonic Anhydrase-Enhanced Carbon Dioxide Supercapacitor. U.S. Provisional Patent Application Ser. No: 63/639,837. Filed Aug. 6, 2025.</a></p>
+                    <br></br>
+                    <p> Agbo, P. Cyanobacterial System for Catalyzing CO<sub>2</sub> Mineralization. US Provisional Application No.: 63/552,451. Filed Feb. 12, 2024.</a></p>
+                    
+                </div>
+            </section>
+
+            <section class="twocol">
+                <div class="colhead"><b><h3>Technical Literature</h3></b></div>
+                <div> <!-- class="body"> -->
+                    <p><b>CyCAM Development</b></p>
+		    <p> Agbo, P. Engineering Cyanobacterial Carbonic Anhydrase Surface Mutations for Fast CO<sub>2</sub> Hydration and Capture. ChemRxiv July 7, 2025. <a href="https://doi.org/10.26434/chemrxiv-2025-0rnx8">https://doi.org/10.26434/chemrxiv-2025-0rnx8</a></p>
+                    <br></br>
+                    <p> Agbo, P.; Varghese, J. O.; Henning, R. K.; Kanady, J. S.; Ram, A. Hybrid Biophysical Systems for Atmospheric CO<sub>2</sub> Capture. J. Phys. Energy 2026, 8 (2), 021002. <a href="https://doi.org/10.1088/2515-7655/ae61f4">https://doi.org/10.1088/2515-7655/ae61f4</a></p>
+                    
+                </div>
+            </section>
+            
+
+        </div>
+            
+            
+
+        <!-- ───────── CONTACT ───────── -->
+        <div class="panel" id="contact">
+            <section class="masthead">
+
+                <h1><em>Interested?</em> Get in touch.</h1>
+            </section>
+
+            <section class="twocol">
+                <div class="colhead"><b><h3>Contact</h3></b></div>
+                <div class="contact-grid">
+                    <div class="contact-block">
+                        <h3>General</h3>
+                        <p><a href="mailto:hlo@teracarbon.energy">hlo@teracarbon.energy</a></p>
+                        <p>For partnerships, purchasing, and general inquiries.</p>
+                        <br>
+                        <h3>Location</h3>
+                        <p>Oakland, California, U.S.A.</p>
+                    </div>
+
+                    <div class="contact-block">
+                        <h3>Send a message</h3>
+                        <form onsubmit="event.preventDefault(); this.reset(); alert('Thanks — we\'ll be in touch.');">
+                            <label for="name">Name</label>
+                            <input id="name" type="text" required>
+
+                            <label for="email">Email</label>
+                            <input id="email" type="email" required>
+
+                            <label for="msg">Message</label>
+                            <textarea id="msg" required></textarea>
+
+                            <button class="submit" type="submit">Send</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </div><!-- /.wrap -->
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2025 Teracarbon Energy</div>
+        <div><a href="mailto:hlo@teracarbon.energy">hlo@teracarbon.energy</a></div>
+    </footer>
+
+    <!-- Tab switching -->
+    <!-- Tab switching -->
+    <script>
+        const tabs = document.querySelectorAll('.tab');
+        const panels = document.querySelectorAll('.panel');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.target;
+                tabs.forEach(t => t.classList.toggle('active', t === tab));
+                panels.forEach(p => p.classList.toggle('active', p.id === target));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    </script>
+
+    <!-- Electron-density molecule field renderer -->
+    <script>
+    (function () {
+        const canvas = document.getElementById('molfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, dpr;
+
+        const MOLECULES = {
+            co2: {
+                atoms: [
+                    { el: 'C', x:  0,    y: 0, r: 1.1 },
+                    { el: 'O', x: -1.6,  y: 0, r: 1.3 },
+                    { el: 'O', x:  1.6,  y: 0, r: 1.3 }
+                ]
+            },
+            carbonate: {
+                atoms: [
+                    { el: 'C', x: 0,     y: 0,     r: 1.1 },
+                    { el: 'O', x: 0,     y: -1.7,  r: 1.3 },
+                    { el: 'O', x: 1.47,  y: 0.85,  r: 1.3 },
+                    { el: 'O', x: -1.47, y: 0.85,  r: 1.3 }
+                ]
+            },
+            bicarbonate: {
+                atoms: [
+                    { el: 'C', x: 0,     y: 0,     r: 1.1 },
+                    { el: 'O', x: 0,     y: -1.7,  r: 1.3 },
+                    { el: 'O', x: 1.47,  y: 0.85,  r: 1.3 },
+                    { el: 'O', x: -1.47, y: 0.85,  r: 1.3 },
+                    { el: 'H', x: -2.4,  y: 1.6,   r: 0.55 }
+                ]
+            }
+        };
+
+        const TYPES = ['co2', 'carbonate', 'bicarbonate'];
+        const TONE = { C: 150, O: 90, H: 200 };
+
+        let particles = [];
+
+        function makeParticle() {
+            const type = TYPES[(Math.random() * TYPES.length) | 0];
+            return {
+                type,
+                x: Math.random() * W,
+                y: Math.random() * H,
+                scale: 14 + Math.random() * 22,
+                vx: (Math.random() - 0.5) * 0.18,
+                vy: (Math.random() - 0.5) * 0.18,
+                rot: Math.random() * Math.PI * 2,
+                vr: (Math.random() - 0.5) * 0.005, <!-- modify molecule drift speed -->
+                alpha: 0.35 + Math.random() * 0.45
+            };
+        }
+
+        function populate() {
+            const count = Math.round((W * H) / 150000);
+            particles = [];
+            for (let i = 0; i < Math.max(8, Math.min(count, 40)); i++) {
+                particles.push(makeParticle());
+            }
+        }
+
+        function drawAtom(px, py, radius, tone, alpha) {
+            const g = ctx.createRadialGradient(px, py, 0, px, py, radius);
+            g.addColorStop(0,    'rgba(' + tone + ',' + tone + ',' + tone + ',' + (0.55 * alpha) + ')');
+            g.addColorStop(0.55, 'rgba(' + tone + ',' + tone + ',' + tone + ',' + (0.20 * alpha) + ')');
+            g.addColorStop(1,    'rgba(' + tone + ',' + tone + ',' + tone + ',0)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(' + tone + ',' + tone + ',' + tone + ',' + (0.22 * alpha) + ')';
+            ctx.lineWidth = 0.6;
+            for (let k = 1; k <= 3; k++) {
+                ctx.beginPath();
+                ctx.arc(px, py, radius * (k / 3.4), 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        function drawMolecule(p) {
+            const mol = MOLECULES[p.type];
+            const cos = Math.cos(p.rot), sin = Math.sin(p.rot);
+
+            ctx.strokeStyle = 'rgba(120,120,120,' + (0.18 * p.alpha) + ')';
+            ctx.lineWidth = 1;
+            const C = mol.atoms[0];
+            const cx = p.x + (C.x * cos - C.y * sin) * p.scale;
+            const cy = p.y + (C.x * sin + C.y * cos) * p.scale;
+            for (let i = 1; i < mol.atoms.length; i++) {
+                const a = mol.atoms[i];
+                const ax = p.x + (a.x * cos - a.y * sin) * p.scale;
+                const ay = p.y + (a.x * sin + a.y * cos) * p.scale;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(ax, ay);
+                ctx.stroke();
+            }
+
+            for (let i = 0; i < mol.atoms.length; i++) {
+                const a = mol.atoms[i];
+                const ax = p.x + (a.x * cos - a.y * sin) * p.scale;
+                const ay = p.y + (a.x * sin + a.y * cos) * p.scale;
+                drawAtom(ax, ay, a.r * p.scale, TONE[a.el], p.alpha);
+            }
+        }
+
+        function tick() {
+            ctx.clearRect(0, 0, W, H);
+
+            for (const p of particles) {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.rot += p.vr;
+
+                const margin = p.scale * 3;
+                if (p.x < -margin) p.x = W + margin;
+                if (p.x > W + margin) p.x = -margin;
+                if (p.y < -margin) p.y = H + margin;
+                if (p.y > H + margin) p.y = -margin;
+
+                drawMolecule(p);
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        function resize() {
+            dpr = window.devicePixelRatio || 1;
+            W = canvas.clientWidth;
+            H = canvas.clientHeight;
+            canvas.width  = W * dpr;
+            canvas.height = H * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            populate();
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        tick();
+    })();
+    </script>
+
+</body>
+</html>
